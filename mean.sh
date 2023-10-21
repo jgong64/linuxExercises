@@ -1,29 +1,25 @@
 #!/bin/bash
 
+# Usage statement
+usage() {
+  echo "usage: $0 <column> [file.csv]" 1>&2
+  exit 1
+}
+
 # Check for the correct number of arguments
-if [ "$#" -lt 1 ]; then
-    echo "Usage: $0 <column> [file.csv]"
-    exit 1
+if [ $# -lt 1 ] || [ $# -gt 2 ]; then
+  usage
 fi
 
-column="$1"
-file="$2"
+column=$1
+input_file=$2
 
-# If no file is provided, read from stdin
-if [ -z "$file" ]; then
-    data="$(cat)"
-else
-    # Check if the file exists
-    if [ ! -f "$file" ]; then
-        echo "Error: File $file not found."
-        exit 1
-    fi
-
-    # Read the specified column from the CSV file
-    data=$(cut -d',' -f "$column" "$file")
+# If no input file is specified, read from stdin
+if [ -z "$input_file" ]; then
+  input_file=/dev/stdin
 fi
 
-# Calculate the mean of the data
-mean=$(awk -F, '{s+=$1} END {print s/NR}' <<< "$data")
+# Use cut to select the required column, tail to skip the header, and awk to calculate the mean
+mean=$(cut -d ',' -f $column "$input_file" | tail -n +2 | awk -F ',' '{sum+=$1} END{print sum/NR}')
 
-echo "Mean of column $column: $mean"
+echo "Mean of column $column in $input_file: $mean"
